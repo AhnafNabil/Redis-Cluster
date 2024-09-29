@@ -303,11 +303,34 @@ You'll notice that the replica has been promoted to primary.
 
 ## 7. Monitoring and Maintenance
 
-To monitor your Redis cluster, you can use tools like:
+For ongoing monitoring and maintenance:
 
-- **Redis CLI**: Provides commands like `INFO` and `CLUSTER NODES` for real-time cluster data.
-- **Redis Sentinel**: Can be added for monitoring and automated failover (not covered in this guide).
-- **CloudWatch**: Set up CloudWatch metrics to monitor Redis performance on EC2.
+1. Regular health checks:
+   ```
+   redis-cli --cluster check <private-ip-of-any-node>:6379
+   ```
+
+2. Monitor memory usage:
+   ```
+   INFO memory
+   ```
+
+3. Check persistence status (if AOF is enabled):
+   ```
+   INFO persistence
+   ```
+
+4. Monitor connected clients:
+   ```
+   INFO clients
+   ```
+
+5. For backups, on each node:
+   ```
+   sudo systemctl stop redis
+   sudo cp /var/lib/redis/dump.rdb /path/to/backup/dump.rdb
+   sudo systemctl start redis
+   ```
 
 ## Conclusion
 
