@@ -26,12 +26,32 @@ Before starting, ensure you have:
 First, let's create a new Pulumi project and write the code to provision our EC2 instances.
 
 1. Create a new directory and initialize a Pulumi project:
+
    ```bash
    mkdir redis-cluster-pulumi && cd redis-cluster-pulumi
    pulumi new aws-javascript
    ```
 
-2. Replace the contents of `index.js` with the following code:
+This command creates a new directory with the basic structure for a Pulumi project. Follow the prompts to set up your project.
+
+2. Create Key Pair
+
+    Create a new key pair for our instances using the following command:
+
+    ```sh
+    aws ec2 create-key-pair --key-name MyKeyPair --query 'KeyMaterial' --output text > MyKeyPair.pem
+    ```
+
+These commands will create key pair for mysql instance.
+
+3. Set File Permissions of the key files
+
+```sh
+chmod 400 MyKeyPair.pem
+```
+
+
+4. Replace the contents of `index.js` with the following code:
 
 ```javascript
 const pulumi = require("@pulumi/pulumi");
@@ -159,7 +179,7 @@ exports.redisInstance4Id = redisInstance4.id;
 exports.redisInstance4PublicIp = redisInstance4.publicIp;
 ```
 
-3. Deploy the infrastructure:
+5. Deploy the infrastructure:
    ```bash
    pulumi up
    ```
