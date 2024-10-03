@@ -1,29 +1,47 @@
-# Redis Cluster Deployment on AWS EC2 (4 Nodes)
+# Redis Cluster Deployment on AWS
 
 This guide provides step-by-step instructions for deploying a Redis cluster with 4 nodes (2 primary and 2 replica) on Amazon Web Services (AWS) Elastic Compute Cloud (EC2) instances. We'll cover the process from setting up EC2 instances using Pulumi to configuring, launching, and thoroughly testing the Redis cluster.
 
+## What is Redis Cluster?
+
 ![alt text](images/redis-cluster.svg)
 
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Setting up EC2 Instances with Pulumi](#setting-up-ec2-instances-with-pulumi)
-3. [Installing Redis](#installing-redis)
-4. [Configuring Redis Nodes](#configuring-redis-nodes)
-5. [Creating the Redis Cluster](#creating-the-redis-cluster)
-6. [Testing the Cluster](#testing-the-cluster)
-7. [Monitoring and Maintenance](#monitoring-and-maintenance)
+A Redis Cluster is a distributed implementation of Redis that provides data partitioning, replication, and high availability. It allows you to scale a Redis installation across multiple nodes, balancing data and load to improve performance and fault tolerance. Here are the key features and concepts:
 
-## 1. Prerequisites
+### Key Features of Redis Cluster:
+1. **Sharding (Data Partitioning):** Redis Cluster automatically splits your dataset across multiple nodes. Each node holds a subset of the data, and operations on keys are routed to the appropriate node. Redis uses a mechanism called **hash slots** to map keys to nodes.
+   
+2. **Replication:** Redis Cluster supports replication by automatically assigning slave nodes to master nodes. Each master node has one or more replicas (slaves) to ensure high availability. If a master fails, one of the replicas can take over.
 
-Before starting, ensure you have:
-- An AWS account
-- Node.js and npm installed
-- Pulumi CLI installed
-- Basic knowledge of AWS EC2 and Security Groups
-- Familiarity with Linux command line
-- SSH client for connecting to EC2 instances
+3. **High Availability:** If a master node goes down, Redis Cluster can promote one of its replicas to be the new master, ensuring that the cluster continues to operate. This ensures minimal downtime in case of node failure.
 
-## 2. Setting up EC2 Instances with Pulumi
+4. **Automatic Failover:** Redis Cluster detects when a node fails and triggers an automatic failover. A replica node is promoted to master, and the cluster reconfigures itself without manual intervention.
+
+5. **Scaling:** You can add or remove nodes from the cluster to scale out or scale down. Redis Cluster automatically rebalances data among the nodes during scaling operations.
+
+## Scenario Overview
+
+This lab focuses on deploying a highly available **Redis Cluster** on AWS using **EC2 instances**. The setup includes 4 Redis nodes (2 primary and 2 replicas) distributed across two Availability Zones to ensure fault tolerance and high performance. Using **Pulumi**, we provision the necessary infrastructure, including a **VPC**, subnets, security group, and EC2 instances. Each instance is configured with Redis in cluster mode. The cluster is created using the Redis CLI, and tests are conducted to verify key-value operations, data distribution, and failover scenarios. Monitoring and backup strategies are implemented to ensure long-term cluster health and security.
+
+![alt text](aws-redis.png)
+
+## Step 1: Setting up EC2 Instances with Pulumi
+
+### Configure AWS CLI
+
+- Configure AWS CLI with the necessary credentials. Run the following command and follow the prompts to configure it:
+
+    ```sh
+    aws configure
+    ```
+    
+    This command sets up your AWS CLI with the necessary credentials, region, and output format.
+
+    ![alt text](image.png)
+
+    You will find the `AWS Access key` and `AWS Seceret Access key` on Lab description page,where you generated the credentials.
+
+    ![alt text](image-1.png)
 
 First, let's create a new Pulumi project and write the code to provision our EC2 instances.
 
