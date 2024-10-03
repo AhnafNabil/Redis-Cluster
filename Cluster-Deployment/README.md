@@ -23,7 +23,7 @@ A Redis Cluster is a distributed implementation of Redis that provides data part
 
 This lab focuses on deploying a highly available **Redis Cluster** on AWS using **EC2 instances**. The setup includes 4 Redis nodes (2 primary and 2 replicas) distributed across two Availability Zones to ensure fault tolerance and high performance. Using **Pulumi**, we provision the necessary infrastructure, including a **VPC**, subnets, security group, and EC2 instances. Each instance is configured with Redis in cluster mode. The cluster is created using the Redis CLI, and tests are conducted to verify key-value operations, data distribution, and failover scenarios. Monitoring and backup strategies are implemented to ensure long-term cluster health and security.
 
-![alt text](aws-redis.png)
+![alt text](aws-redis-diagram.png)
 
 ## Step 1: Setting up EC2 Instances with Pulumi
 
