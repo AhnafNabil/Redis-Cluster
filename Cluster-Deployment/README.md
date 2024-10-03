@@ -2,6 +2,8 @@
 
 This guide provides step-by-step instructions for deploying a Redis cluster with 4 nodes (2 primary and 2 replica) on Amazon Web Services (AWS) Elastic Compute Cloud (EC2) instances. We'll cover the process from setting up EC2 instances using Pulumi to configuring, launching, and thoroughly testing the Redis cluster.
 
+![alt text](images/redis-cluster.svg)
+
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Setting up EC2 Instances with Pulumi](#setting-up-ec2-instances-with-pulumi)
