@@ -6,7 +6,7 @@ This guide provides a detailed process for setting up a Redis Cluster on Amazon 
 
 In this scenario, we will use Pulumi to provision AWS infrastructure, creating a VPC with three public subnets, six EC2 instances for a Redis Cluster (three per subnet), and an additional EC2 instance for a Node.js application. After configuring Redis on the instances and creating the cluster, the Node.js app is developed with ioredis for Redis integration, featuring routes for setting and retrieving key-value pairs. The app is deployed on the EC2 instance, connecting to Redis via private IPs.
 
-## 1. Infrastructure Setup with Pulumi
+## Step 1: Infrastructure Setup with Pulumi
 
 ### Configure AWS CLI
 
@@ -18,9 +18,11 @@ In this scenario, we will use Pulumi to provision AWS infrastructure, creating a
     
     This command sets up your AWS CLI with the necessary credentials, region, and output format.
 
+    ![alt text](image.png)
 
     You will find the `AWS Access key` and `AWS Seceret Access key` on Lab description page,where you generated the credentials.
 
+    ![alt text](image-1.png)
 
 ### Pulumi Project Setup
 
@@ -224,30 +226,59 @@ Now, let's create a new Pulumi project and write the code to provision our EC2 i
    pulumi up
    ```
 
-This Pulumi code provisions a VPC with three public subnets across three availability zones and creates a total of seven EC2 instances: one Node.js instance in the first subnet (ap-southeast-1a) and six Redis instances spread across the remaining two subnets (ap-southeast-1b and ap-southeast-1c) to form a Redis Cluster. For creating a Redis cluster with replicas, we will need at least 3 master nodes and 3 replica nodes (for a total of 6 nodes) as Redis Cluster requires at least 3 master nodes to function properly.
+This Pulumi code provisions a VPC with three public subnets across three availability zones and creates a total of seven EC2 instances: 1 Node.js instance in the first subnet (ap-southeast-1a) and 6 Redis instances spread across the remaining two subnets (ap-southeast-1b and ap-southeast-1c) to form a Redis Cluster. For creating a Redis cluster with replicas, we will need at least 3 master nodes and 3 replica nodes (for a total of 6 nodes) as Redis Cluster requires at least 3 master nodes to function properly.
 
-## 2. Installing and Configuring Redis
+## Step 2: Installing Redis
 
-For each EC2 instance created in the previous step:
+For each EC2 instance:
 
-1. Connect to the instance via SSH:
-   ```bash
-   ssh -i MyKeyPair.pem ubuntu@<instance-public-ip>
+1. Connect via SSH:
+
+   ```
+   ssh -i your-key.pem ec2-user@<instance-public-ip>
    ```
 
-2. Install Redis:
+2. Update the system and install Redis:
+
    ```bash
    sudo apt update
    sudo apt install redis-server -y
    ```
 
-3. Configure Redis by editing the configuration file:
+3. Start Redis service:
+
+   ```bash
+   sudo systemctl start redis-server
+   sudo systemctl enable redis-server
+   ```
+
+4. Verify Redis is running:
+
+   ```bash
+   sudo systemctl status redis-server 
+   ```
+
+   ![alt text](./images/image-3.png)
+
+## Step 3: Configuring Redis Nodes
+
+On each instance, modify the Redis configuration:
+
+1. Open the Redis configuration file:
+
    ```bash
    sudo nano /etc/redis/redis.conf
    ```
-   Modify the following settings:
-   ```
+
+2. Make the following changes:
+
+   ```bash
    bind 0.0.0.0
+   ```
+
+   ![alt text](./images/image-4.png)
+
+   ```bash
    protected-mode no
    port 6379
    cluster-enabled yes
@@ -256,30 +287,58 @@ For each EC2 instance created in the previous step:
    appendonly yes
    ```
 
-4. Restart Redis to apply the changes:
+   ![alt text](./images/image-5.png)
+
+3. Save the file and exit.
+
+4. Restart Redis:
+
    ```bash
    sudo systemctl restart redis-server
    ```
 
-## 3. Creating the Redis Cluster
+## Step 4: Creating the Redis Cluster
 
-1. SSH into one of the EC2 instances to create the cluster.
+1. On one of the instances, install Redis CLI tools:
 
-2. Use the Redis CLI to create the cluster by connecting the nodes:
    ```bash
-   redis-cli --cluster create \
-   <redis1-privateIP>:6379 <redis2-privateIP>:6379 <redis3-privateIP>:6379 \
-   <redis4-privateIP>:6379 <redis5-privateIP>:6379 <redis6-privateIP>:6379 \
-   --cluster-replicas 1
+   sudo apt install redis-tools -y
    ```
 
-3. Confirm the cluster creation when prompted. The output should show that the cluster was created successfully with primary and replica nodes.
+2. Create the cluster (replace with your actual private IPs):
 
-## 4. Node.js Application Integration
+    ```bash
+    redis-cli --cluster create \
+    <redis1-privateIP>:6379 <redis2-privateIP>:6379 <redis3-privateIP>:6379 \
+    <redis4-privateIP>:6379 <redis5-privateIP>:6379 <redis6-privateIP>:6379 \
+    --cluster-replicas 1
+    ```
 
-### Setting up Node.js Environment
+   The command initializes a Redis cluster with six nodes (3 primary and 3 replicas) across the specified IP addresses and ports. The `--cluster-replicas 1` flag indicates that each primary node will have one replica for redundancy and high availability.
 
-1. Create a new directory for your Node.js application:
+3. Confirm the cluster creation when prompted.
+
+    ![alt text](./images/image-7.png)
+
+## Step 5: Node.js Application Integration
+
+### Setting up Node.js Environment on EC2
+
+1. **Connect to your EC2 instance** where Node.js will be hosted. Use SSH to log in:
+
+   ```bash
+   ssh -i "your-key.pem" ubuntu@<nodejs-instance-public-ip>
+   ```
+
+2. **Install Node.js and npm** (if not already installed):
+
+   ```bash
+   sudo apt update
+   sudo apt install nodejs npm -y
+   ```
+
+3. **Create a new directory for your Node.js application** and install dependencies:
+
    ```bash
    mkdir redis-cluster-nodejs && cd redis-cluster-nodejs
    npm init -y
@@ -338,47 +397,54 @@ For each EC2 instance created in the previous step:
    });
    ```
 
-2. Replace the `host` values with the private IPs of your Redis Cluster nodes.
+    Replace the `host` values with the private IPs of your Redis Cluster nodes.
 
 ### Testing the Application
 
 1. Run the Node.js application:
+
    ```bash
    node app.js
    ```
 
-2. Set a key-value pair using `curl`:
+2. Set a key-value pair using `curl` while the application is running:
+
    ```bash
    curl -X POST -H "Content-Type: application/json" -d '{"key":"mykey","value":"Hello from Node.js!"}' http://localhost:3000/set
    ```
 
 3. Retrieve the value using the key:
+
    ```bash
    curl http://localhost:3000/get/mykey
    ```
 
-## 6. Monitoring and Maintenance
+## Step 6: Monitoring and Maintenance
 
 1. Use the Redis CLI for regular health checks:
+
    ```bash
    redis-cli --cluster check <private-ip-of-any-node>:6379
    ```
 
 2. Monitor memory usage:
+
    ```bash
    redis-cli INFO memory
    ```
 
 3. Check persistence status:
+
    ```bash
    redis-cli INFO persistence
    ```
 
 4. Monitor connected clients:
+
    ```bash
    redis-cli INFO clients
    ```
 
 ## Conclusion
 
-This guide provides the steps necessary to set up a Redis Cluster on AWS and integrate it with a Node.js application. By following these instructions, you can ensure a robust and scalable infrastructure for your Redis-based applications. Remember to implement proper security measures and perform regular maintenance to keep your Redis Cluster healthy and performant.
+This guide provides the steps necessary to set up a Redis Cluster on AWS and integrate it with a Node.js application. By following these instructions, you can ensure a robust and scalable infrastructure for your Redis-based applications. 
