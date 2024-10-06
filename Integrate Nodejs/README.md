@@ -2,9 +2,13 @@
 
 This guide provides a detailed process for setting up a Redis Cluster on Amazon Web Services (AWS) and integrating it with a Node.js application. It includes everything from provisioning infrastructure using Pulumi to testing the final application for functionality.
 
+![alt text](./images/nodejs-redis.svg)
+
 ## Scenario Overview
 
 In this scenario, we will use Pulumi to provision AWS infrastructure, creating a VPC with three public subnets, six EC2 instances for a Redis Cluster (three per subnet), and an additional EC2 instance for a Node.js application. After configuring Redis on the instances and creating the cluster, the Node.js app is developed with ioredis for Redis integration, featuring routes for setting and retrieving key-value pairs. The app is deployed on the EC2 instance, connecting to Redis via private IPs.
+
+![alt text](./images/redis-nodejs.png)
 
 ## Step 1: Infrastructure Setup with Pulumi
 
@@ -226,11 +230,15 @@ Now, let's create a new Pulumi project and write the code to provision our EC2 i
    pulumi up
    ```
 
+   ![alt text](image-2.png)
+
 This Pulumi code provisions a VPC with three public subnets across three availability zones and creates a total of seven EC2 instances: 1 Node.js instance in the first subnet (ap-southeast-1a) and 6 Redis instances spread across the remaining two subnets (ap-southeast-1b and ap-southeast-1c) to form a Redis Cluster. For creating a Redis cluster with replicas, we will need at least 3 master nodes and 3 replica nodes (for a total of 6 nodes) as Redis Cluster requires at least 3 master nodes to function properly.
+
+![alt text](image-3.png)
 
 ## Step 2: Installing Redis
 
-For each EC2 instance:
+For each Redis EC2 instance:
 
 1. Connect via SSH:
 
@@ -258,7 +266,7 @@ For each EC2 instance:
    sudo systemctl status redis-server 
    ```
 
-   ![alt text](./images/image-3.png)
+   ![alt text](image-4.png)
 
 ## Step 3: Configuring Redis Nodes
 
@@ -276,7 +284,7 @@ On each instance, modify the Redis configuration:
    bind 0.0.0.0
    ```
 
-   ![alt text](./images/image-4.png)
+   ![alt text](image-5.png)
 
    ```bash
    protected-mode no
@@ -287,7 +295,7 @@ On each instance, modify the Redis configuration:
    appendonly yes
    ```
 
-   ![alt text](./images/image-5.png)
+   ![alt text](image-6.png)
 
 3. Save the file and exit.
 
@@ -318,7 +326,7 @@ On each instance, modify the Redis configuration:
 
 3. Confirm the cluster creation when prompted.
 
-    ![alt text](./images/image-7.png)
+    ![alt text](image-7.png)
 
 ## Step 5: Node.js Application Integration
 
